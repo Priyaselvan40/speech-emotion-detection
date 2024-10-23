@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Recognition</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Emotion Recognition</h1>
+        <h3>Upload an audio file or record your voice</h3>
+        
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="file" id="audioFile" name="audio_file" accept="audio/*">
+            <button type="submit">Upload</button>
+        </form>
+
+        <h3>Or Record Audio</h3>
+        <div class="record-section">
+            <button id="startRecord">Start Recording</button>
+            <button id="stopRecord" disabled>Stop Recording</button>
+            <audio id="audioPlayback" controls></audio>
+        </div>
+
+        <div id="result"></div>
+        <div id="error"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/record.js') }}"></script>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            let formData = new FormData();
+            let audioFile = document.getElementById('audioFile').files[0];
+            let errorDiv = document.getElementById('error');
+            errorDiv.innerHTML = '';
+            if (audioFile) {
+                formData.append('audio_file', audioFile);
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const firstEmotion = data[0];
+                        document.getElementById('result').innerHTML = `Emotion: ${firstEmotion.label}, Score: ${firstEmotion.score.toFixed(2)}`;
+                    } else {
+                        document.getElementById('result').innerHTML = 'No emotion detected';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    errorDiv.innerHTML = 'An error occurred while uploading the file.';
+                });
+            } else {
+                errorDiv.innerHTML = 'Please select a file to upload.';
+            }
+        });
+    </script>
+</body>
+</html>
